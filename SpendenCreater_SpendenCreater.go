@@ -99,19 +99,50 @@ func PageBuilder(pC PageContent, ad AdressData) {
 
 
 	pdf.CellFormat(0,20, umlautTranslater(pC.HeaderLine), "", 1, "", false, 0, "")
+	pdf.CellFormat(0,10, "", "", 1, "", false, 0, "")
 
 	pdf.SetFont("Arial", "B", 14)
 	pdf.CellFormat(0,6, umlautTranslater(pC.ICFName), "", 1, "C", false, 0, "")
 
+
 	pdf.SetFont("Arial", "", 12)
 	pdf.CellFormat(0,6, umlautTranslater(pC.ICFAdress), "", 1, "C", false, 0, "")
 	pdf.CellFormat(0,6, umlautTranslater(pC.ICFEmail), "", 1, "C", false, 0, "")
+	pdf.CellFormat(0,20, "", "", 1, "", false, 0, "")
 
 	pdf.SetFont("Arial", "", 12)
-	pdf.CellFormat(0,6, umlautTranslater(ad.Namen), "", 1, "C", false, 0, "")
-	pdf.CellFormat(0,6, umlautTranslater(ad.Straße), "", 1, "C", false, 0, "")
-	pdf.CellFormat(0,6, umlautTranslater(ad.Ort), "", 1, "C", false, 0, "")
+	pdf.CellFormat(0,6, umlautTranslater(ad.Namen), "", 1, "L", false, 0, "")
+	pdf.CellFormat(0,6, umlautTranslater(ad.Straße), "", 1, "L", false, 0, "")
+	pdf.CellFormat(0,6, umlautTranslater(ad.Ort), "", 1, "L", false, 0, "")
+	pdf.CellFormat(0,20, "", "", 1, "", false, 0, "")
 
+	pdf.SetFont("Arial", "B", 14)
+	pdf.CellFormat(0,6, umlautTranslater(pC.HeadlineSammelb), "", 1, "L", false, 0, "")
+
+	pdf.SetFont("Arial", "", 12)
+	pdf.MultiCell(0,6, umlautTranslater(pC.SammelbContentBeforBorder), "", "L",  false)
+	pdf.CellFormat(0,5, "", "", 1, "", false, 0, "")
+
+	pdf.SetFont("Arial", "B", 8)
+	pdf.CellFormat(0,6, umlautTranslater("Name und Anschrift des Zuwendenden:"), "L,T,R", 1, "L", false, 0, "")
+
+	pdf.SetFont("Arial", "B", 10)
+	pdf.CellFormat(0,6, umlautTranslater(ad.Namen + ", " + ad.Straße + ", " + ad.PLZ + ", " + ad.Ort), "L,B,R", 1, "C", false, 0, "")
+	pdf.CellFormat(0,5, "", "", 1, "", false, 0, "")
+
+
+	pdf.SetFont("Arial", "B", 8)
+	pdf.CellFormat(63.3, 6, "Gesamtbetrag der Zuwendung - in Ziffern -", "L,T,R", 0, "C", false, 0, "")
+	pdf.CellFormat(63.3, 6, "- in Buchstaben -", "L,T,R", 0, "C", false, 0, "")
+	pdf.CellFormat(63.3, 6, umlautTranslater("Zeitraum der Sammelbestätigung:"), "L,T,R", 0, "C", false, 0, "")
+	pdf.Ln(-1)
+
+	//TODO: Gesamtbetrag
+	pdf.SetFont("Arial", "B", 10)
+	pdf.CellFormat(63.3, 6, "TEST", "L,B,R", 0, "C", false, 0, "")
+	pdf.CellFormat(63.3, 6, "TEST", "L,B,R", 0, "C", false, 0, "")
+	pdf.CellFormat(63.3, 6, "TEST", "L,B,R", 0, "C", false, 0, "")
+	pdf.Ln(-1)
 
 
 	err := pdf.OutputFileAndClose(ad.Namen +".pdf")
