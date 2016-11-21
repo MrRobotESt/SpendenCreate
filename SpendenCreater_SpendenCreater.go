@@ -7,10 +7,13 @@ import (
 	"bufio"
 	"io"
 	"strings"
-
-	"encoding/csv"
-
+	"github.com/PuerkitoBio/goquery"
 	"golang.org/x/text/encoding/charmap"
+	"encoding/csv"
+	"log"
+	"time"
+	"github.com/Sirupsen/logrus"
+
 )
 
 type AdressData struct {
@@ -19,6 +22,13 @@ type AdressData struct {
 	PLZ string
 	Ort string
 	Straße string
+
+}
+
+type DonateData struct {
+	Name string
+	Buchungsdatum string
+	Betrag string
 
 }
 
@@ -33,43 +43,40 @@ type PageContent struct {
 	Vorsitzender string
 	Finanzen string
 	HeadlineHinweis string
-	HinweisContentOne string
-	HinweisContentTwo string
+	HinweisContent string
+
 	AnlageSammelbest string
 
 }
 
 
-
 func PageContentBuilder() PageContent {
+	file, _ := os.Open("./template/templatePDF.html")
+	doc, err := goquery.NewDocumentFromReader(file)
+	if err != nil {
+		log.Fatal(err)
+	}
 	pageContent := PageContent{}
-	pageContent.HeaderLine = "Aussteller (Bezeichnung und Anschrift der steuerbegünstigten Einrichtung)"
-	pageContent.ICFName = "ICF Nürnberg e.V."
-	pageContent.ICFAdress = "Königstraße 57; 90402 Nürnberg"
-	pageContent.ICFEmail = "E-Mail: buchhaltung@icfn.de"
-	pageContent.HeadlineSammelb = "Sammelbestätigung über Geldzuwendungen/Mitgliedsbeiträge"
+	doc.Find(".content").Each(func(i int, s *goquery.Selection) {
 
-	pageContent.SammelbContentBeforBorder = "im Sinne des § 10b des Einkommensteuergesetzes an eine der in § 5 Abs. 1 Nr. 9 des Körperschaftsteuergesetzes bezeichneten"
-	pageContent.SammelbContentBeforBorder += "Körperschaften, Personenvereinigungen oder Vermögensmassen"
+		pageContent.HeaderLine = doc.Find(".headerline").Text()
+		pageContent.ICFName = doc.Find(".icfAdress").Find("#icfname").Text()
+		pageContent.ICFAdress = doc.Find(".icfAdress").Find("#icfadress").Text()
+		pageContent.ICFEmail = doc.Find(".icfAdress").Find("#icfemail").Text()
 
-	pageContent.SammelbContentAfterBorder = "Wir sind wegen Förderung mildtätiger Zwecke sowie folgender gemeinnütziger Zwecke: Förderung der Religion, der Jugendhilfe."
-	pageContent.SammelbContentAfterBorder += "Es wird bestätigt, dass die Zuwendungen nur zur Förderung mildtätiger Zwecke und folgender gemeinnütziger Zwecke: Förderung der"
-	pageContent.SammelbContentAfterBorder += "Religion, der Jugendhilfe, der internationalen Gesinnung, der Toleranz auf allen Gebieten der Kultur und des"
-	pageContent.SammelbContentAfterBorder += "Völkerverständigungsgedankens sowie des Schutzes von Ehe und Familie verwendet werden."
-	pageContent.SammelbContentAfterBorder += "Es wird bestätigt, dass es sich nicht um einen Mitgliedsbeitrag handelt, dessen Abzug nach § 10b Abs. 1 des Einkommensteuergesetzes ausgeschlossen ist."
-	pageContent.SammelbContentAfterBorder += "Es wird bestätigt, dass über die in der Gesamtsumme enthaltenen Zuwendungen keine weiteren Bestätigungen, weder formelle"
-	pageContent.SammelbContentAfterBorder += "Zuwendungsbestätigungen noch Beitragsquittungen oder Ähnliches ausgestellt wurden und werden."
-	pageContent.SammelbContentAfterBorder += "Ob es sich um den Verzicht auf Erstattung von Aufwendungen handelt, ist der Anlage zur Sammelbestätigung zu entnehmen."
+		pageContent.HeadlineSammelb = doc.Find(".sammelbest").Find("#headline").Text()
 
-	pageContent.Vorsitzender = "Vorsitzender: Daniel Kalupner"
-	pageContent.Finanzen     = "Finanzen: Steffen Wentzel"
-	pageContent.HeadlineHinweis = "Hinweis:"
+		pageContent.SammelbContentBeforBorder = strings.TrimSpace(doc.Find(".sammelbest").Find("#contentbefor").Text())
+		pageContent.SammelbContentAfterBorder = strings.TrimSpace(doc.Find(".sammelbest").Find("#contentafter").Text())
 
-	pageContent.HinweisContentOne = "Wer vorsätzlich oder grob fahrlässig eine unrichtige Zuwendungsbestätigung erstellt oder veranlasst, dass Zuwendungen nicht zu den in der"
-	pageContent.HinweisContentOne += "Zuwendungsbestätigung angegebenen steuerbegünstigten Zwecken verwendet werden, haftet für die entgangene Steuer (§ 10b Abs. 4 EStG, § 9 Abs. 3 KStG, § 9 Nr. 5 GewStG)."
+		pageContent.Vorsitzender = doc.Find(".unterschrift").Find("#vorsitzender").Text()
+		pageContent.Finanzen = doc.Find(".unterschrift").Find("#finanzen").Text()
 
-	pageContent.AnlageSammelbest = "Anlage zur Sammelbestätigung"
+		pageContent.HeadlineHinweis = strings.TrimSpace(doc.Find(".hinweis").Find("#headline").Text())
+		pageContent.HinweisContent = strings.TrimSpace(doc.Find(".hinweis").Find("#content").Text())
 
+		pageContent.AnlageSammelbest = doc.Find(".anlage").Find("#headline").Text()
+	})
 	return pageContent
 }
 
@@ -91,6 +98,9 @@ func PageBuilder(pC PageContent, ad AdressData) {
 	AnlageSammelbest string
 	 */
 	//adressDate := GetNameAdressDataFromCSV()
+
+	current_data := time.Now().Local()
+
 
 	pdf := gofpdf.New("P", "mm", "A4", "")
 	pdf.AddPage()
@@ -114,12 +124,12 @@ func PageBuilder(pC PageContent, ad AdressData) {
 	pdf.CellFormat(0,6, umlautTranslater(ad.Namen), "", 1, "L", false, 0, "")
 	pdf.CellFormat(0,6, umlautTranslater(ad.Straße), "", 1, "L", false, 0, "")
 	pdf.CellFormat(0,6, umlautTranslater(ad.Ort), "", 1, "L", false, 0, "")
-	pdf.CellFormat(0,20, "", "", 1, "", false, 0, "")
+	pdf.CellFormat(0,15, "", "", 1, "", false, 0, "")
 
-	pdf.SetFont("Arial", "B", 14)
+	pdf.SetFont("Arial", "B", 10)
 	pdf.CellFormat(0,6, umlautTranslater(pC.HeadlineSammelb), "", 1, "L", false, 0, "")
 
-	pdf.SetFont("Arial", "", 12)
+	pdf.SetFont("Arial", "", 8)
 	pdf.MultiCell(0,6, umlautTranslater(pC.SammelbContentBeforBorder), "", "L",  false)
 	pdf.CellFormat(0,5, "", "", 1, "", false, 0, "")
 
@@ -143,12 +153,37 @@ func PageBuilder(pC PageContent, ad AdressData) {
 	pdf.CellFormat(63.3, 6, "TEST", "L,B,R", 0, "C", false, 0, "")
 	pdf.CellFormat(63.3, 6, "TEST", "L,B,R", 0, "C", false, 0, "")
 	pdf.Ln(-1)
+	pdf.CellFormat(0,8, "", "", 1, "", false, 0, "")
 
 
-	err := pdf.OutputFileAndClose(ad.Namen +".pdf")
+
+
+	pdf.SetFont("Arial", "", 8)
+	pdf.MultiCell(0,6, umlautTranslater(pC.SammelbContentAfterBorder), "", "L",  false)
+	pdf.CellFormat(0,15, "", "", 1, "", false, 0, "")
+
+	pdf.SetFont("Arial", "B", 8)
+	pdf.CellFormat(50, 6, umlautTranslater("Nürnberg, " + current_data.Format("02.01.2006")), "", 0, "C", false, 0, "")
+	pdf.CellFormat(63.3, 6, umlautTranslater(pC.Vorsitzender), "T", 0, "C", false, 0, "")
+	pdf.CellFormat(2, 2, "", "", 0, "C", false, 0, "")
+	pdf.CellFormat(63.3, 6, umlautTranslater(pC.Finanzen), "T", 0, "C", false, 0, "")
+	pdf.Ln(-1)
+	pdf.CellFormat(0,8, "", "", 1, "", false, 0, "")
+
+	pdf.SetFont("Arial", "B", 8)
+	pdf.CellFormat(0,6, umlautTranslater(pC.HeadlineHinweis), "", 1, "L", false, 0, "")
+
+	pdf.SetFont("Arial", "", 8)
+	pdf.MultiCell(0,6, umlautTranslater(pC.HinweisContent), "", "L",  false)
+	pdf.CellFormat(0,5, "", "", 1, "", false, 0, "")
+
+
+	err := pdf.OutputFileAndClose("./pdf/" + ad.Namen +".pdf")
 	if err != nil {
 		fmt.Print(err)
 	}
+
+
 
 }
 
@@ -156,7 +191,7 @@ func PageBuilder(pC PageContent, ad AdressData) {
 func GetNameAdressDataFromCSV() []AdressData {
 	// Load a TXT file.
 	var adressData []AdressData
-	f, _ := os.Open("adressenUTF8.csv")
+	f, _ := os.Open("./csv/adressenUTF8.csv")
 	// Create a new reader.
 	r := csv.NewReader(bufio.NewReader(f))
 	for {
@@ -185,23 +220,62 @@ func GetNameAdressDataFromCSV() []AdressData {
 
 	}
 
-	fmt.Println(adressData[0].Ort)
-	fmt.Println("ÜÜÜÜÜÜ")
+
+	logrus.Infoln("Get the Adresses: DONE")
 	return adressData
 
 }
 
 
-func GetDonateData() {
+func GetDonateData() []DonateData {
+	// Load a TXT file.
+	var donateData []DonateData
+	f, _ := os.Open("./csv/buchungUTF8.csv")
+	// Create a new reader.
+	r := csv.NewReader(bufio.NewReader(f))
+	for {
 
+		record, err := r.Read()
+		// Stop at EOF.
+		if err == io.EOF {
+			break
+		}
+
+		if len(record) == 2 {
+			recordData := "" + record[0] + "" + record[1]
+
+			extract := strings.Split(recordData, ";")
+
+			data := DonateData{Name: extract[3], Buchungsdatum: extract [0], Betrag: extract[7] }
+			donateData = append(donateData, data)
+		}
+
+	}
+
+	logrus.Infoln("Get the Adresses: DONE")
+	return donateData
 }
 
-func CSVtoUTF8() {
-	f, err := os.Open("adressen.csv")
+func searchDonateContent(name string, donateData []DonateData) []DonateData{
+
+	var spender []DonateData
+	fmt.Println("INSIDE")
+	for x := range donateData {
+		fmt.Println(donateData[x].Name)
+		if name == donateData[x].Name {
+			spender = append(spender, DonateData{Name: donateData[x].Name, Betrag: donateData[x].Betrag, Buchungsdatum: donateData[x].Buchungsdatum})
+		}
+	}
+
+	return spender
+}
+
+func CSVtoUTF8(data string) {
+	f, err := os.Open("./csv/" + data + ".csv")
 	if err != nil {
 		// handle file open error
 	}
-	out, err := os.Create("adressenUtf8.csv")
+	out, err := os.Create("./csv/" + data + "Utf8.csv")
 	if err != nil {
 		// handler error
 	}
@@ -214,14 +288,26 @@ func CSVtoUTF8() {
 	f.Close()
 }
 
+
+
+
 func main() {
+
+
+
+	/*
+	CSVtoUTF8("adressen")
+	CSVtoUTF8("buchung")
 	pC := PageContentBuilder()
 
 	adressSlice := GetNameAdressDataFromCSV()
 	for x := range adressSlice {
 		PageBuilder(pC, adressSlice[x])
 	}
-
-	//CSVtoUTF8()
+	*/
+	fmt.Println("HLLO")
+	data := GetDonateData()
+	slicey := searchDonateContent("Sturm Robert", data)
+	fmt.Println(slicey)
 
 }
