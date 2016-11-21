@@ -14,6 +14,7 @@ import (
 	"time"
 	"github.com/Sirupsen/logrus"
 
+	"strconv"
 )
 
 type AdressData struct {
@@ -29,6 +30,7 @@ type DonateData struct {
 	Name string
 	Buchungsdatum string
 	Betrag string
+
 
 }
 
@@ -80,7 +82,7 @@ func PageContentBuilder() PageContent {
 	return pageContent
 }
 
-func PageBuilder(pC PageContent, ad AdressData) {
+func PageBuilder(pC PageContent, ad AdressData , pD []DonateData, summe string) {
 
 	/*
 	HeaderLine string
@@ -149,8 +151,8 @@ func PageBuilder(pC PageContent, ad AdressData) {
 
 	//TODO: Gesamtbetrag
 	pdf.SetFont("Arial", "B", 10)
-	pdf.CellFormat(63.3, 6, "TEST", "L,B,R", 0, "C", false, 0, "")
-	pdf.CellFormat(63.3, 6, "TEST", "L,B,R", 0, "C", false, 0, "")
+	pdf.CellFormat(63.3, 6, summe + umlautTranslater("€"), "L,B,R", 0, "C", false, 0, "")
+	pdf.CellFormat(63.3, 6, "", "L,B,R", 0, "C", false, 0, "")
 	pdf.CellFormat(63.3, 6, "TEST", "L,B,R", 0, "C", false, 0, "")
 	pdf.Ln(-1)
 	pdf.CellFormat(0,8, "", "", 1, "", false, 0, "")
@@ -176,6 +178,26 @@ func PageBuilder(pC PageContent, ad AdressData) {
 	pdf.SetFont("Arial", "", 8)
 	pdf.MultiCell(0,6, umlautTranslater(pC.HinweisContent), "", "L",  false)
 	pdf.CellFormat(0,5, "", "", 1, "", false, 0, "")
+
+
+	pdf.AddPage()
+	pdf.SetFont("Arial", "B", 6)
+	pdf.CellFormat(45, 6, umlautTranslater("Datum der Zuwendung"), "L,T,R,B", 0, "C", false, 0, "")
+	pdf.CellFormat(45, 6, umlautTranslater("Art der Zuwendung"), "L,T,R,B", 0, "C", false, 0, "")
+	pdf.CellFormat(50, 6, umlautTranslater("Verzicht auf die Erstattung von Aufwendungen"), "L,T,R,B", 0, "C", false, 0, "")
+	pdf.CellFormat(45, 6, umlautTranslater("Betrag"), "L,T,R,B", 0, "C", false, 0, "")
+	pdf.Ln(-1)
+
+	pdf.SetFont("Arial", "", 6)
+	for x := range pD {
+		pdf.CellFormat(45, 6, umlautTranslater(pD[x].Buchungsdatum), "L,T,R,B", 0, "C", false, 0, "")
+		pdf.CellFormat(45, 6, umlautTranslater("Geldzuwendung"), "L,B,R", 0, "C", false, 0, "")
+		pdf.CellFormat(50, 6, umlautTranslater("nein"), "L,B,R", 0, "C", false, 0, "")
+		pdf.CellFormat(45, 6,umlautTranslater(pD[x].Betrag), "L,B,R", 0, "C", false, 0, "")
+		pdf.Ln(-1)
+	}
+	pdf.CellFormat(0,8, "", "", 1, "", false, 0, "")
+
 
 
 	err := pdf.OutputFileAndClose("./pdf/" + ad.Namen +".pdf")
@@ -230,6 +252,7 @@ func GetNameAdressDataFromCSV() []AdressData {
 func GetDonateData() []DonateData {
 	// Load a TXT file.
 	var donateData []DonateData
+
 	f, _ := os.Open("./csv/buchungUTF8.csv")
 	// Create a new reader.
 	r := csv.NewReader(bufio.NewReader(f))
@@ -248,6 +271,7 @@ func GetDonateData() []DonateData {
 
 			data := DonateData{Name: extract[3], Buchungsdatum: extract [0], Betrag: extract[7] }
 			donateData = append(donateData, data)
+
 		}
 
 	}
@@ -256,12 +280,24 @@ func GetDonateData() []DonateData {
 	return donateData
 }
 
+func gesamtBetrag(donatePersonData []DonateData) string{
+
+	summe := 0
+	for x := range donatePersonData {
+		s, _ := strconv.Atoi(donatePersonData[x].Betrag)
+		summe  += s
+	}
+
+	summeString := strconv.Itoa(summe)
+	return  summeString
+}
+
 func searchDonateContent(name string, donateData []DonateData) []DonateData{
 
 	var spender []DonateData
 	fmt.Println("INSIDE")
 	for x := range donateData {
-		fmt.Println(donateData[x].Name)
+
 		if name == donateData[x].Name {
 			spender = append(spender, DonateData{Name: donateData[x].Name, Betrag: donateData[x].Betrag, Buchungsdatum: donateData[x].Buchungsdatum})
 		}
@@ -295,19 +331,21 @@ func main() {
 
 
 
-	/*
-	CSVtoUTF8("adressen")
-	CSVtoUTF8("buchung")
+
+	//CSVtoUTF8("adressen")
+	//CSVtoUTF8("buchung")
 	pC := PageContentBuilder()
 
 	adressSlice := GetNameAdressDataFromCSV()
+	donateData:= GetDonateData()
 	for x := range adressSlice {
-		PageBuilder(pC, adressSlice[x])
+
+		donatePersonData := searchDonateContent(adressSlice[x].Namen, donateData)
+		summeString := gesamtBetrag(donatePersonData)
+		fmt.Println(len(donatePersonData))
+		PageBuilder(pC, adressSlice[x] , donatePersonData, summeString)
 	}
-	*/
-	fmt.Println("HLLO")
-	data := GetDonateData()
-	slicey := searchDonateContent("Sturm Robert", data)
-	fmt.Println(slicey)
+
+
 
 }
