@@ -28,7 +28,7 @@ type AdressData struct {
 }
 
 type DonateData struct {
-	Name string
+	Namen string
 	Buchungsdatum string
 	Betrag string
 
@@ -291,7 +291,7 @@ func GetDonateData() []DonateData {
 
 			extract := strings.Split(recordData, ";")
 
-			data := DonateData{Name: extract[3], Buchungsdatum: extract [0], Betrag: extract[7] }
+			data := DonateData{Namen: extract[3], Buchungsdatum: extract [0], Betrag: extract[7] }
 			donateData = append(donateData, data)
 
 		}
@@ -320,9 +320,10 @@ func searchDonateContent(name string, donateData []DonateData) []DonateData{
 	var spender []DonateData
 	fmt.Println("INSIDE")
 	for x := range donateData {
-
-		if name == donateData[x].Name {
-			spender = append(spender, DonateData{Name: donateData[x].Name, Betrag: donateData[x].Betrag, Buchungsdatum: donateData[x].Buchungsdatum})
+		fmt.Println("Holla")
+		if name == donateData[x].Namen {
+			spender = append(spender, DonateData{Namen: donateData[x].Namen, Betrag: donateData[x].Betrag, Buchungsdatum: donateData[x].Buchungsdatum})
+			fmt.Println("HLLO")
 		}
 	}
 
@@ -355,11 +356,39 @@ func Period( dep []DonateData) string {
 }
 
 func PersonExistsDepositChecker(dep []DonateData) bool {
+	fmt.Println(len(dep))
 	if len(dep) > 0 {
 		return true
 	}
 
 	return false
+}
+
+func NamensOnlyInDeposit(dep []DonateData, pers []AdressData) {
+
+	var namens string
+
+	for x := range dep {
+
+		for y := range pers {
+
+			if dep[x].Namen == pers[y].Namen  {
+				continue
+			} else {
+				namens += dep[x].Namen + "\n"
+			}
+
+		}
+
+
+	}
+
+	if namens != "" {
+		WriteToFile("OnlyInDeposit", namens)
+	}
+
+
+
 }
 
 func WriteToFile(fileName string, value string) {
@@ -368,18 +397,30 @@ func WriteToFile(fileName string, value string) {
 		panic(err)
 	}
 
-	defer f.Close()
-
 	if _, err = f.WriteString(value); err != nil {
 		panic(err)
 	}
+
+	defer f.Close()
 
 }
 
 //Needed Sort Libraryfunctions for overriding!
 func (a Deposit) Len() int           { return len(a) }
 func (a  Deposit) Swap(i, j int)      { a[i], a[j] = a[j], a[i] }
-func (a  Deposit) Less(i, j int) bool { return a[i].Buchungsdatum < a[j].Buchungsdatum }
+func (a  Deposit) Less(i, j int) bool {
+	datumSliceA := strings.Split(a[i].Buchungsdatum,".")
+	datumSliceB := strings.Split(a[j].Buchungsdatum,".")
+	fmt.Println("*****************")
+	fmt.Println(a[i].Buchungsdatum)
+	fmt.Println(a[j].Buchungsdatum)
+
+	if datumSliceA[2] < datumSliceB[2]{
+		return true
+	}
+
+	return datumSliceA[0] <= datumSliceB[0] &&  datumSliceA[1] <= datumSliceB[1]
+}
 
 
 
@@ -390,26 +431,34 @@ func (a  Deposit) Less(i, j int) bool { return a[i].Buchungsdatum < a[j].Buchung
 func main() {
 
 
-	//CSVtoUTF8("adressen")
+	CSVtoUTF8("adressen")
 	//CSVtoUTF8("buchung")
 	pC := PageContentBuilder()
 
 	adressSlice := GetNameAdressDataFromCSV()
 	donateData:= GetDonateData()
+	fmt.Println(donateData)
 	for x := range adressSlice {
-
+	fmt.Println(adressSlice[x].Namen)
 		donatePersonData := searchDonateContent(adressSlice[x].Namen, donateData)
 		summeString := gesamtBetrag(donatePersonData)
+		fmt.Println(donatePersonData)
 		sort.Sort(Deposit(donatePersonData))
+
+		fmt.Println(len(donatePersonData))
 		check := PersonExistsDepositChecker(donatePersonData)
 		if check == true {
 			period := Period(donatePersonData)
 			PageBuilder(pC, adressSlice[x], donatePersonData, summeString, period)
 		} else {
+
 			WriteToFile("NoDeposit", adressSlice[x].Namen)
 		}
+
+
+
 	}
 
-
+	NamensOnlyInDeposit(donateData, adressSlice)
 
 }
