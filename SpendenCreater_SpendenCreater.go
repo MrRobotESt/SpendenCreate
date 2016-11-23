@@ -15,6 +15,7 @@ import (
 	"github.com/Sirupsen/logrus"
 
 	"strconv"
+	"sort"
 )
 
 type AdressData struct {
@@ -34,6 +35,8 @@ type DonateData struct {
 
 }
 
+type Deposit []DonateData
+
 type PageContent struct {
 	HeaderLine string
 	ICFName  string
@@ -51,6 +54,8 @@ type PageContent struct {
 
 }
 
+
+/* Main Funktions */
 
 func PageContentBuilder() PageContent {
 	file, _ := os.Open("./template/templatePDF.html")
@@ -82,7 +87,7 @@ func PageContentBuilder() PageContent {
 	return pageContent
 }
 
-func PageBuilder(pC PageContent, ad AdressData , pD []DonateData, summe string) {
+func PageBuilder(pC PageContent, ad AdressData , pD []DonateData, summe string, period string) {
 
 	/*
 	HeaderLine string
@@ -151,9 +156,9 @@ func PageBuilder(pC PageContent, ad AdressData , pD []DonateData, summe string) 
 
 	//TODO: Gesamtbetrag
 	pdf.SetFont("Arial", "B", 10)
-	pdf.CellFormat(63.3, 6, summe + umlautTranslater("€"), "L,B,R", 0, "C", false, 0, "")
+	pdf.CellFormat(63.3, 6, summe + umlautTranslater(" €"), "L,B,R", 0, "C", false, 0, "")
 	pdf.CellFormat(63.3, 6, "", "L,B,R", 0, "C", false, 0, "")
-	pdf.CellFormat(63.3, 6, "TEST", "L,B,R", 0, "C", false, 0, "")
+	pdf.CellFormat(63.3, 6, umlautTranslater(period), "L,B,R", 0, "C", false, 0, "")
 	pdf.Ln(-1)
 	pdf.CellFormat(0,8, "", "", 1, "", false, 0, "")
 
@@ -181,6 +186,20 @@ func PageBuilder(pC PageContent, ad AdressData , pD []DonateData, summe string) 
 
 
 	pdf.AddPage()
+
+	pdf.SetFont("Arial", "B", 8)
+	pdf.CellFormat(45,6, umlautTranslater(pC.AnlageSammelbest), "", 0, "", false, 0, "")
+	pdf.CellFormat(45, 6, umlautTranslater("vom " + current_data.Format("02.01.2006")), "", 0, "R", false, 0, "")
+	pdf.Ln(-1)
+	pdf.CellFormat(0,5, "", "", 1, "", false, 0, "")
+
+	pdf.SetFont("Arial", "", 8)
+	pdf.CellFormat(35, 4, umlautTranslater(ad.Namen), "", 1, "", false, 0, "")
+	pdf.CellFormat(35, 4, umlautTranslater(ad.Straße), "", 1, "", false, 0, "")
+	pdf.CellFormat(20, 4, umlautTranslater(ad.PLZ), "", 1, "", false, 0, "")
+	pdf.CellFormat(20, 4, umlautTranslater(ad.Ort), "", 1, "", false, 0, "")
+	pdf.Ln(-1)
+
 	pdf.SetFont("Arial", "B", 6)
 	pdf.CellFormat(45, 6, umlautTranslater("Datum der Zuwendung"), "L,T,R,B", 0, "C", false, 0, "")
 	pdf.CellFormat(45, 6, umlautTranslater("Art der Zuwendung"), "L,T,R,B", 0, "C", false, 0, "")
@@ -193,12 +212,16 @@ func PageBuilder(pC PageContent, ad AdressData , pD []DonateData, summe string) 
 		pdf.CellFormat(45, 6, umlautTranslater(pD[x].Buchungsdatum), "L,T,R,B", 0, "C", false, 0, "")
 		pdf.CellFormat(45, 6, umlautTranslater("Geldzuwendung"), "L,B,R", 0, "C", false, 0, "")
 		pdf.CellFormat(50, 6, umlautTranslater("nein"), "L,B,R", 0, "C", false, 0, "")
-		pdf.CellFormat(45, 6,umlautTranslater(pD[x].Betrag), "L,B,R", 0, "C", false, 0, "")
+		pdf.CellFormat(45, 6,umlautTranslater(strings.Replace(pD[x].Betrag,".",",",1) + " €"), "L,B,R", 0, "C", false, 0, "")
 		pdf.Ln(-1)
 	}
 	pdf.CellFormat(0,8, "", "", 1, "", false, 0, "")
-
-
+	pdf.SetFont("Arial", "B", 8)
+	pdf.CellFormat(45, 6, "", "", 0, "C", false, 0, "")
+	pdf.CellFormat(45, 6, "", "", 0, "C", false, 0, "")
+	pdf.CellFormat(50, 6, umlautTranslater("Gesamtsumme"), "", 0, "C", false, 0, "")
+	pdf.CellFormat(45, 6,umlautTranslater(summe + " €"), "", 0, "C", false, 0, "")
+	pdf.Ln(-1)
 
 	err := pdf.OutputFileAndClose("./pdf/" + ad.Namen +".pdf")
 	if err != nil {
@@ -208,6 +231,8 @@ func PageBuilder(pC PageContent, ad AdressData , pD []DonateData, summe string) 
 
 
 }
+
+/* Help Funcitons */
 
 
 func GetNameAdressDataFromCSV() []AdressData {
@@ -248,16 +273,13 @@ func GetNameAdressDataFromCSV() []AdressData {
 
 }
 
-
 func GetDonateData() []DonateData {
-	// Load a TXT file.
-	var donateData []DonateData
 
+	var donateData []DonateData
 	f, _ := os.Open("./csv/buchungUTF8.csv")
 	// Create a new reader.
 	r := csv.NewReader(bufio.NewReader(f))
 	for {
-
 		record, err := r.Read()
 		// Stop at EOF.
 		if err == io.EOF {
@@ -282,14 +304,15 @@ func GetDonateData() []DonateData {
 
 func gesamtBetrag(donatePersonData []DonateData) string{
 
-	summe := 0
+	summe := 0.0
 	for x := range donatePersonData {
-		s, _ := strconv.Atoi(donatePersonData[x].Betrag)
+		s, _ := strconv.ParseFloat(donatePersonData[x].Betrag, 2)
 		summe  += s
 	}
 
-	summeString := strconv.Itoa(summe)
-	return  summeString
+	summeStringPoint := strconv.FormatFloat(summe,'f',-1,32)
+	summeStringKomma := strings.Replace(summeStringPoint,".",",",1)
+	return  summeStringKomma
 }
 
 func searchDonateContent(name string, donateData []DonateData) []DonateData{
@@ -324,12 +347,47 @@ func CSVtoUTF8(data string) {
 	f.Close()
 }
 
+func Period( dep []DonateData) string {
+
+	period := dep[0].Buchungsdatum + " - " + dep[len(dep)-1].Buchungsdatum
+
+	return period
+}
+
+func PersonExistsDepositChecker(dep []DonateData) bool {
+	if len(dep) > 0 {
+		return true
+	}
+
+	return false
+}
+
+func WriteToFile(fileName string, value string) {
+	f, err := os.OpenFile("./log/" + fileName + ".txt", os.O_APPEND|os.O_WRONLY|os.O_CREATE, 0600)
+	if err != nil {
+		panic(err)
+	}
+
+	defer f.Close()
+
+	if _, err = f.WriteString(value); err != nil {
+		panic(err)
+	}
+
+}
+
+//Needed Sort Libraryfunctions for overriding!
+func (a Deposit) Len() int           { return len(a) }
+func (a  Deposit) Swap(i, j int)      { a[i], a[j] = a[j], a[i] }
+func (a  Deposit) Less(i, j int) bool { return a[i].Buchungsdatum < a[j].Buchungsdatum }
 
 
+
+
+
+/* MAIN */
 
 func main() {
-
-
 
 
 	//CSVtoUTF8("adressen")
@@ -342,8 +400,14 @@ func main() {
 
 		donatePersonData := searchDonateContent(adressSlice[x].Namen, donateData)
 		summeString := gesamtBetrag(donatePersonData)
-		fmt.Println(len(donatePersonData))
-		PageBuilder(pC, adressSlice[x] , donatePersonData, summeString)
+		sort.Sort(Deposit(donatePersonData))
+		check := PersonExistsDepositChecker(donatePersonData)
+		if check == true {
+			period := Period(donatePersonData)
+			PageBuilder(pC, adressSlice[x], donatePersonData, summeString, period)
+		} else {
+			WriteToFile("NoDeposit", adressSlice[x].Namen)
+		}
 	}
 
 
