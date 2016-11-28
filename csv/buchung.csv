@@ -1,10 +1,10 @@
-Buchungstag;Konto;Vorgang;Empfï¿½nger;Verwendungszweck;Kategorie;Klasse;Betrag
+Buchungstag;Konto;Vorgang;Empfänger;Verwendungszweck;Kategorie;Klasse;Betrag
 04.01.2016;_HVB Spendenkonto;2495;Muster, Marta und Max;SEPA-Dauerauftrag NONREF;Spenden:05 Spende 10ter;Spendeneinnahmen;40
-04.01.2016;_HVB Spendenkonto;2496;Mï¿½ller, Manuel;Spende von XYZ, Strasse 24, 90443 Nuernberg;Spenden:05 Spende 10ter;Spendeneinnahmen;75
+04.01.2016;_HVB Spendenkonto;2496;Müller, Manuel;Spende von XYZ, Strasse 24, 90443 Nuernberg;Spenden:05 Spende 10ter;Spendeneinnahmen;75
 04.01.2016;_HVB Spendenkonto;2497;Muster, Marta und Max;Beitrag;Spenden:05 Spende 10ter;Spendeneinnahmen;75
-04.01.2016;_HVB Spendenkonto;2498;Mï¿½ller, Manuel;SPENDE DEZ. 2015;Spenden:05 Spende 10ter;Spendeneinnahmen;100
+04.01.2016;_HVB Spendenkonto;2498;Müller, Manuel;SPENDE DEZ. 2015;Spenden:05 Spende 10ter;Spendeneinnahmen;100
 04.01.2016;_HVB Spendenkonto;2499;Muster, Marta und Max;SPENDE;Spenden:05 Spende 10ter;Spendeneinnahmen;120
-04.01.2016;_HVB Spendenkonto;2500;Mï¿½ller, Hans;Projekt Sanfte HoffnungArbeit an de r tschechischen Grenze1.0964/CHF 150.00;Spenden:OneLove;Spendeneinnahmen;136,81
-05.01.2016;_HVB Spendenkonto;2501;Mï¿½ller, Manuel;Spende;Spenden:05 Spende 10ter;Spendeneinnahmen;140
-05.01.2016;_HVB Spendenkonto;2502;Mï¿½ller, Manuel;Spende;Spenden:05 Spende 10ter;Spendeneinnahmen;150
-05.01.2016;_HVB Spendenkonto;2503;Sturm, Robert;Regelmaessige Spende Sp Nr  136;Spenden:05 Spende 10ter;Spendeneinnahmen;150
+04.01.2016;_HVB Spendenkonto;2500;Müller, Hans;Projekt Sanfte HoffnungArbeit an de r tschechischen Grenze1.0964/CHF 150.00;Spenden:OneLove;Spendeneinnahmen;136,81
+05.01.2016;_HVB Spendenkonto;2501;Müller, Manuel;Spende;Spenden:05 Spende 10ter;Spendeneinnahmen;140
+05.01.2016;_HVB Spendenkonto;2502;Müller, Manuel;Spende;Spenden:05 Spende 10ter;Spendeneinnahmen;150
+05.01.2016;_HVB Spendenkonto;2503;Muster, Marta und Max;Regelmaessige Spende Sp Nr  136;Spenden:05 Spende 10ter;Spendeneinnahmen;150
