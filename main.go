@@ -5,7 +5,6 @@ import (
 	sp "./spendenCreator"
 	st "./structs"
 	"flag"
-	"fmt"
 	"sort"
 	"strings"
 )
@@ -20,7 +19,6 @@ type Deposit []st.DonateData
 
 func main() {
 
-
 	flag.Parse()
 	used := func(a *flag.Flag) {
 
@@ -30,7 +28,6 @@ func main() {
 		case a.Name == "csvconvert":
 			hp.CSVtoUTF8("adressen")
 			hp.CSVtoUTF8("buchung")
-
 
 		//Start and create the PDFs
 		case a.Name == "start":
@@ -77,9 +74,6 @@ func (a Deposit) Swap(i, j int) { a[i], a[j] = a[j], a[i] }
 func (a Deposit) Less(i, j int) bool {
 	datumSliceA := strings.Split(a[i].Buchungsdatum, ".")
 	datumSliceB := strings.Split(a[j].Buchungsdatum, ".")
-	fmt.Println("*****************")
-	fmt.Println(a[i].Buchungsdatum)
-	fmt.Println(a[j].Buchungsdatum)
 
 	if datumSliceA[2] < datumSliceB[2] {
 		return true

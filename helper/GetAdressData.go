@@ -1,13 +1,13 @@
 package helper
 
 import (
-	"encoding/csv"
-	"bufio"
-	"io"
-	"strings"
-	"github.com/Sirupsen/logrus"
 	st "../structs"
+	"bufio"
+	"encoding/csv"
+	"github.com/Sirupsen/logrus"
+	"io"
 	"os"
+	"strings"
 )
 
 //Get the AdressData and put them into the AdressData struct
@@ -31,15 +31,11 @@ func GetNameAdressDataFromCSV() []st.AdressData {
 
 			extract := strings.Split(recordData, ";")
 
-			data := st.AdressData{Namen: extract[0], Firma: extract [1], PLZ: extract[2], Ort: extract[3], Straße: extract[4] }
+			data := st.AdressData{Namen: extract[0], Firma: extract[1], PLZ: extract[2], Ort: extract[3], Straße: extract[4]}
 			adressData = append(adressData, data)
 		}
 
-
-
-
 	}
-
 
 	logrus.Infoln("Get the Adresses: DONE!")
 	return adressData

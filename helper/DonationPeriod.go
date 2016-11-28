@@ -1,12 +1,12 @@
 package helper
 
-import(
+import (
 	st "../structs"
 )
 
 //Get the TimePeriod
 
-func Period( dep []st.DonateData) string {
+func Period(dep []st.DonateData) string {
 
 	period := dep[0].Buchungsdatum + " - " + dep[len(dep)-1].Buchungsdatum
 
